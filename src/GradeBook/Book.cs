@@ -3,35 +3,101 @@ using System.Collections.Generic;
 
 namespace GradeBook
 {
-  class Book
+  public delegate void GradeAddedDelegate(object sender, EventArgs args);
+
+  public abstract class Book : NamedObject, IBook
   {
-    public Book(string name)
+    protected Book(string name) : base(name)
     {
-      grades = new List<double>();
-      this.name = name;
     }
-    public void AddGrade(double grade)
+
+    public abstract event GradeAddedDelegate GradeAdded;
+    public abstract void AddGrade(double grade);
+    public abstract Statistics GetStatistics();
+  }
+  public interface IBook
+  {
+    void AddGrade(double grade);
+    Statistics GetStatistics();
+    string Name {get;}
+    event GradeAddedDelegate GradeAdded;
+  }
+
+  public class InMemoryBook : Book
+  {
+    public InMemoryBook(string name) : base(name)
     {
-      grades.Add(grade);
+      // grades = new List<double>();
+      Name = name;
     }
-    public void ShowStatistics()
+    
+    public void AddGrade(char letter)
     {
-      double sum = 0;
-      var highGrade = double.MinValue;
-      var lowGrade = double.MaxValue;
-      foreach (var number in grades)
+      switch(letter)
       {
-        highGrade = Math.Max(number, highGrade);
-        lowGrade = Math.Min(number, lowGrade);
-        sum += number;
+        case 'A':
+          AddGrade(90);
+          break;
+        case 'B':
+          AddGrade(80);
+          break;
+        case 'C':
+          AddGrade(70);
+          break;
+        default:
+          AddGrade(0);
+          break;
       }
-      int listLength = grades.Count;
-      double avgGrade = sum / listLength;
-      System.Console.WriteLine($"The average grade is {avgGrade:N2}");
-      System.Console.WriteLine($"The highest grade is {highGrade:N2}");
-      System.Console.WriteLine($"The lowest grade is {lowGrade:N2}");
+    }
+
+    public override void AddGrade(double grade)
+    {
+      if (grade <= 100 && grade >= 0)
+      {
+        grades.Add(grade);
+        if(GradeAdded != null)
+        {
+          GradeAdded(this, new EventArgs());
+        }
+      }
+      else
+      {
+        throw new ArgumentException($"Invalid {nameof(grade)}");
+      }
+    }
+    public override event GradeAddedDelegate GradeAdded;
+
+    public override Statistics GetStatistics()
+    {
+      var result = new Statistics();
+
+      // For each loop
+      // foreach (var grade in grades)
+      // {
+      //   result.High = Math.Max(grade, result.High);
+      //   result.Low = Math.Min(grade, result.Low);
+      //   result.Average += grade;
+      // }
+
+      // While loop
+      // var index = 0;
+      // while (index < grades.Count)
+      // {
+      //   result.High = Math.Max(grades[index], result.High);
+      //   result.Low = Math.Min(grades[index], result.Low);
+      //   result.Average += grades[index];
+      //   index += 1;
+      // };
+
+      // For loop
+      for(var index=0; index < grades.Count; index += 1)
+      {
+        result.Add(grades[index]);
+      }
+
+      return result;
     }
     private List<double> grades;
-    private string name;
+    public const string CATEGORY = "Science";
   }
 }
